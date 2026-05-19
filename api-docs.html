@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qwen3-TTS API 文档</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3347;
+      --accent: #6c8fff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --code-bg: #11141e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .main { flex: 1; padding: 48px 56px; max-width: 900px; }
+
+    /* Sidebar */
+    .sidebar-logo { padding: 0 24px 24px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo h2 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .sidebar-logo p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .sidebar-section { padding: 16px 24px 8px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 7px 24px; font-size: 13px; color: var(--muted); cursor: pointer; transition: all .15s; border-left: 2px solid transparent; }
+    .sidebar-item:hover { color: var(--text); background: var(--surface2); }
+    .sidebar-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(108,143,255,.06); }
+    .sidebar-item .method { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; font-family: monospace; }
+    .get  { background: rgba(52,211,153,.12); color: var(--green); }
+    .post { background: rgba(108,143,255,.15); color: var(--accent); }
+    .del  { background: rgba(248,113,113,.12); color: var(--red); }
+
+    /* Header */
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--muted); margin-right: 8px; margin-bottom: 24px; }
+    .badge span { color: var(--green); font-weight: 600; }
+
+    /* Sections */
+    .section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 20px 0 10px; }
+    p { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+
+    /* Endpoint card */
+    .endpoint { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
+    .endpoint-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; cursor: pointer; user-select: none; }
+    .endpoint-header:hover { background: var(--surface2); }
+    .method-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-family: monospace; min-width: 52px; text-align: center; }
+    .endpoint-path { font-family: monospace; font-size: 14px; color: var(--text); font-weight: 500; }
+    .endpoint-desc { color: var(--muted); font-size: 13px; margin-left: auto; }
+    .endpoint-body { border-top: 1px solid var(--border); padding: 20px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+    th { text-align: left; padding: 8px 12px; background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+    th:first-child { border-radius: 6px 0 0 6px; }
+    th:last-child { border-radius: 0 6px 6px 0; }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .param-name { font-family: monospace; color: var(--accent2); font-weight: 500; }
+    .param-type { font-family: monospace; color: var(--muted); font-size: 12px; }
+    .required { color: var(--red); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .optional { color: var(--muted); font-size: 10px; }
+
+    /* Code block */
+    .code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; margin: 12px 0; overflow: hidden; }
+    .code-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+    .code-lang { font-size: 11px; color: var(--muted); font-family: monospace; font-weight: 600; }
+    .copy-btn { font-size: 11px; color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; transition: all .15s; }
+    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+    pre { padding: 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+    code { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; }
+    .kw { color: #c792ea; }
+    .str { color: #c3e88d; }
+    .num { color: #f78c6c; }
+    .cm { color: #546e7a; font-style: italic; }
+    .fn { color: #82aaff; }
+    .key { color: #89ddff; }
+
+    /* Info box */
+    .info-box { background: rgba(108,143,255,.07); border: 1px solid rgba(108,143,255,.25); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted); }
+    .info-box strong { color: var(--accent); }
+
+    /* Base URL chip */
+    .base-url { display: inline-flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-family: monospace; font-size: 14px; margin-bottom: 24px; }
+    .base-url .label { color: var(--muted); font-size: 11px; font-family: sans-serif; }
+    .base-url .url { color: var(--green); }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h2>Qwen3-TTS API</h2>
+      <p>mlx-audio · OpenAI 兼容</p>
+    </div>
+    <div class="sidebar-section">概览</div>
+    <a class="sidebar-item active" href="#overview">📋 介绍</a>
+    <a class="sidebar-item" href="#quickstart">⚡ 快速开始</a>
+    <div class="sidebar-section">模型管理</div>
+    <a class="sidebar-item" href="#list-models"><span class="method get">GET</span> /v1/models</a>
+    <a class="sidebar-item" href="#add-model"><span class="method post">POST</span> /v1/models</a>
+    <a class="sidebar-item" href="#remove-model"><span class="method del">DEL</span> /v1/models</a>
+    <div class="sidebar-section">音频</div>
+    <a class="sidebar-item" href="#tts"><span class="method post">POST</span> /v1/audio/speech</a>
+    <a class="sidebar-item" href="#stt"><span class="method post">POST</span> /v1/audio/transcriptions</a>
+    <a class="sidebar-item" href="#separation"><span class="method post">POST</span> /v1/audio/separations</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Overview -->
+    <div class="section" id="overview">
+      <h1>Qwen3-TTS API 文档</h1>
+      <p class="subtitle">基于 mlx-audio 的 OpenAI 兼容语音合成接口，运行于本机 Apple Silicon GPU</p>
+      <div>
+        <span class="badge">模型 <span>Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit</span></span>
+        <span class="badge">引擎 <span>MLX (Metal GPU)</span></span>
+        <span class="badge">RTF <span>~0.8x</span></span>
+      </div>
+      <div class="base-url">
+        <span class="label">本地</span>
+        <span class="url">http://127.0.0.1:18083</span>
+        <span style="color:var(--border)">|</span>
+        <span class="label">公网</span>
+        <span class="url">https://tts.badtom.dpdns.org</span>
+      </div>
+      <div class="info-box">
+        <strong>OpenAI 兼容</strong> — 接口与 OpenAI Audio API 格式一致，可直接替换 <code>base_url</code> 接入现有应用。模型首次调用时约需 8s 完成加载，之后每次推理约 2~3s。
+      </div>
+    </div>
+
+    <!-- Quickstart -->
+    <div class="section" id="quickstart">
+      <h2>⚡ 快速开始</h2>
+      <h3>curl</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+        <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
+    "input": "你好，欢迎使用语音合成！",
+    "voice": "nova"
+  }'</span> \
+  --output output.mp3</code></pre>
+      </div>
+      <h3>Python (openai SDK)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+        <pre><code><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+client = OpenAI(
+    base_url=<span class="str">"https://tts.badtom.dpdns.org/v1"</span>,
+    api_key=<span class="str">"not-needed"</span>
+)
+
+response = client.audio.speech.create(
+    model=<span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
+    voice=<span class="str">"nova"</span>,
+    input=<span class="str">"你好，欢迎使用语音合成！"</span>,
+)
+response.stream_to_file(<span class="str">"output.mp3"</span>)</code></pre>
+      </div>
+      <h3>Python (requests)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+        <pre><code><span class="kw">import</span> requests
+
+resp = requests.post(
+    <span class="str">"https://tts.badtom.dpdns.org/v1/audio/speech"</span>,
+    json={
+        <span class="str">"model"</span>: <span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
+        <span class="str">"input"</span>: <span class="str">"你好，欢迎使用语音合成！"</span>,
+        <span class="str">"voice"</span>: <span class="str">"nova"</span>,
+        <span class="str">"response_format"</span>: <span class="str">"mp3"</span>,
+    }
+)
+<span class="kw">with</span> open(<span class="str">"output.mp3"</span>, <span class="str">"wb"</span>) <span class="kw">as</span> f:
+    f.write(resp.content)</code></pre>
+      </div>
+    </div>
+
+    <!-- GET /v1/models -->
+    <div class="section" id="list-models">
+      <h2>模型管理</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method-badge get">GET</span>
+          <span class="endpoint-path">/v1/models</span>
+          <span class="endpoint-desc">列出已加载的模型</span>
+        </div>
+        <div class="endpoint-body">
+          <p>返回当前服务器内存中已加载的模型列表。</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>curl http://127.0.0.1:18083/v1/models</code></pre>
+          </div>
+          <h3>响应示例</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>{
+  <span class="key">"object"</span>: <span class="str">"list"</span>,
+  <span class="key">"data"</span>: [{
+    <span class="key">"id"</span>: <span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
+    <span class="key">"object"</span>: <span class="str">"model"</span>,
+    <span class="key">"owned_by"</span>: <span class="str">"system"</span>
+  }]
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /v1/models -->
+      <div class="endpoint" id="add-model">
+        <div class="endpoint-header">
+          <span class="method-badge post">POST</span>
+          <span class="endpoint-path">/v1/models</span>
+          <span class="endpoint-desc">预加载模型到内存</span>
+        </div>
+        <div class="endpoint-body">
+          <table>
+            <tr><th>参数</th><th>位置</th><th>类型</th><th>说明</th></tr>
+            <tr><td class="param-name">model_name</td><td>query</td><td class="param-type">string</td><td><span class="required">必填</span> HuggingFace 模型 ID</td></tr>
+          </table>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>curl -X POST <span class="str">"http://127.0.0.1:18083/v1/models?model_name=mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE /v1/models -->
+      <div class="endpoint" id="remove-model">
+        <div class="endpoint-header">
+          <span class="method-badge del">DEL</span>
+          <span class="endpoint-path">/v1/models</span>
+          <span class="endpoint-desc">从内存中卸载模型</span>
+        </div>
+        <div class="endpoint-body">
+          <table>
+            <tr><th>参数</th><th>位置</th><th>类型</th><th>说明</th></tr>
+            <tr><td class="param-name">model_name</td><td>query</td><td class="param-type">string</td><td><span class="required">必填</span> 已加载的模型 ID</td></tr>
+          </table>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>curl -X DELETE <span class="str">"http://127.0.0.1:18083/v1/models?model_name=mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /v1/audio/speech -->
+    <div class="section" id="tts">
+      <h2>语音合成（TTS）</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method-badge post">POST</span>
+          <span class="endpoint-path">/v1/audio/speech</span>
+          <span class="endpoint-desc">文本转语音</span>
+        </div>
+        <div class="endpoint-body">
+          <p>将输入文本合成为音频文件，直接返回二进制音频流（mp3/wav/flac）。</p>
+
+          <h3>请求体参数（application/json）</h3>
+          <table>
+            <tr><th>参数</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+            <tr><td class="param-name">model</td><td class="param-type">string</td><td>—</td><td><span class="required">必填</span> 模型 ID，如 <code>mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit</code></td></tr>
+            <tr><td class="param-name">input</td><td class="param-type">string</td><td>—</td><td><span class="required">必填</span> 要合成的文本内容</td></tr>
+            <tr><td class="param-name">voice</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 预设音色名，如 <code>nova</code>、<code>alloy</code></td></tr>
+            <tr><td class="param-name">response_format</td><td class="param-type">string</td><td>mp3</td><td><span class="optional">可选</span> 输出格式：<code>mp3</code> / <code>wav</code> / <code>flac</code></td></tr>
+            <tr><td class="param-name">speed</td><td class="param-type">float</td><td>1.0</td><td><span class="optional">可选</span> 语速倍率</td></tr>
+            <tr><td class="param-name">pitch</td><td class="param-type">float</td><td>1.0</td><td><span class="optional">可选</span> 音调</td></tr>
+            <tr><td class="param-name">gender</td><td class="param-type">string</td><td>male</td><td><span class="optional">可选</span> <code>male</code> / <code>female</code></td></tr>
+            <tr><td class="param-name">ref_audio</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 声音克隆参考音频路径（服务器本地路径）</td></tr>
+            <tr><td class="param-name">ref_text</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 参考音频对应文本</td></tr>
+            <tr><td class="param-name">instruct</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 风格指令，如 <code>用温柔的语气说话</code></td></tr>
+            <tr><td class="param-name">temperature</td><td class="param-type">float</td><td>0.7</td><td><span class="optional">可选</span> 采样温度，越高越随机</td></tr>
+            <tr><td class="param-name">top_p</td><td class="param-type">float</td><td>0.95</td><td><span class="optional">可选</span> 核采样概率</td></tr>
+            <tr><td class="param-name">top_k</td><td class="param-type">int</td><td>40</td><td><span class="optional">可选</span> Top-K 采样</td></tr>
+            <tr><td class="param-name">max_tokens</td><td class="param-type">int</td><td>1200</td><td><span class="optional">可选</span> 最大生成 token 数</td></tr>
+            <tr><td class="param-name">stream</td><td class="param-type">bool</td><td>false</td><td><span class="optional">可选</span> 是否流式返回</td></tr>
+          </table>
+
+          <h3>示例：基础合成</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
+    "input": "大家好，今天我们来聊聊人工智能的发展。",
+    "voice": "nova",
+    "response_format": "mp3"
+  }'</span> --output speech.mp3</code></pre>
+          </div>
+
+          <h3>示例：调整语速与音调</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
+    "input": "这是一段慢速、高音调的朗读示例。",
+    "voice": "nova",
+    "speed": 0.8,
+    "pitch": 1.2,
+    "gender": "female"
+  }'</span> --output speech.mp3</code></pre>
+          </div>
+
+          <h3>示例：声音克隆（服务器本地参考音频）</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
+    "input": "用参考音频的声音来合成这段文字。",
+    "ref_audio": "/path/to/reference.wav",
+    "ref_text": "参考音频中说的内容"
+  }'</span> --output cloned.mp3</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /v1/audio/transcriptions -->
+    <div class="section" id="stt">
+      <h2>语音识别（STT）</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method-badge post">POST</span>
+          <span class="endpoint-path">/v1/audio/transcriptions</span>
+          <span class="endpoint-desc">音频转文字</span>
+        </div>
+        <div class="endpoint-body">
+          <p>将音频文件转录为文本，兼容 OpenAI Whisper API 格式。需搭配 STT 模型使用（非当前 TTS 模型）。</p>
+          <table>
+            <tr><th>参数</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+            <tr><td class="param-name">file</td><td class="param-type">file</td><td>—</td><td><span class="required">必填</span> 音频文件（multipart/form-data）</td></tr>
+            <tr><td class="param-name">model</td><td class="param-type">string</td><td>—</td><td><span class="required">必填</span> STT 模型 ID</td></tr>
+            <tr><td class="param-name">language</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 语言代码，如 <code>zh</code>、<code>en</code></td></tr>
+            <tr><td class="param-name">stream</td><td class="param-type">bool</td><td>false</td><td><span class="optional">可选</span> 流式返回</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /v1/audio/separations -->
+    <div class="section" id="separation">
+      <h2>音频分离</h2>
+      <div class="endpoint">
+        <div class="endpoint-header">
+          <span class="method-badge post">POST</span>
+          <span class="endpoint-path">/v1/audio/separations</span>
+          <span class="endpoint-desc">音轨分离（人声/乐器等）</span>
+        </div>
+        <div class="endpoint-body">
+          <p>基于 SAM Audio 模型分离指定音轨，如提取人声、鼓点、吉他等。</p>
+          <table>
+            <tr><th>参数</th><th>类型</th><th>默认值</th><th>说明</th></tr>
+            <tr><td class="param-name">file</td><td class="param-type">file</td><td>—</td><td><span class="required">必填</span> 音频文件</td></tr>
+            <tr><td class="param-name">model</td><td class="param-type">string</td><td>mlx-community/sam-audio-large-fp16</td><td><span class="optional">可选</span> 分离模型</td></tr>
+            <tr><td class="param-name">description</td><td class="param-type">string</td><td>speech</td><td><span class="optional">可选</span> 要分离的内容，如 <code>speech</code>、<code>guitar</code></td></tr>
+            <tr><td class="param-name">steps</td><td class="param-type">int</td><td>16</td><td><span class="optional">可选</span> ODE 步数：2/4/8/16/32</td></tr>
+          </table>
+          <h3>响应</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code>{
+  <span class="key">"target_audio"</span>: <span class="str">"&lt;base64编码的目标音轨&gt;"</span>,
+  <span class="key">"residual_audio"</span>: <span class="str">"&lt;base64编码的剩余音轨&gt;"</span>,
+  <span class="key">"sample_rate"</span>: <span class="num">44100</span>
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '已复制';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Sidebar active state
+  const items = document.querySelectorAll('.sidebar-item');
+  const sections = document.querySelectorAll('.section');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+    items.forEach(i => {
+      i.classList.toggle('active', i.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+</body>
+</html>
