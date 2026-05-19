@@ -93,6 +93,8 @@
 
     /* Info box */
     .info-box { background: rgba(108,143,255,.07); border: 1px solid rgba(108,143,255,.25); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted); }
+    .warn-box { background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.35); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted); }
+    .warn-box strong { color: var(--yellow); }
     .info-box strong { color: var(--accent); }
 
     /* Base URL chip */
@@ -332,6 +334,17 @@ resp = requests.post(
         <div class="endpoint-body">
           <p>将输入文本合成为音频文件，直接返回二进制音频流（mp3/wav/flac）。</p>
 
+          <div class="warn-box">
+            <strong>⚠️ 与标准 OpenAI API 的关键差异 — 接入第三方应用必读</strong><br>
+            本接口格式兼容 OpenAI，但 <code>voice</code> 字段<strong>不兼容</strong> OpenAI 的音色名称（alloy、nova、echo 等）。<code>voice</code> 为<strong>必填字段</strong>，且必须是<a href="#voices">音色列表</a>中的 9 个名称之一。<br><br>
+            已验证的错误行为：
+            <ul style="margin: 8px 0 0 16px; line-height: 2">
+              <li><strong>不传 <code>voice</code></strong>：服务器内部异常，返回 <code>520</code> 错误</li>
+              <li><strong>传 OpenAI 默认音色（如 <code>alloy</code>）</strong>：返回 <code>HTTP 200</code>，但音频为无法识别的乱码</li>
+            </ul>
+            两种情况均<strong>不返回有意义的错误信息</strong>，排查困难。第三方应用接入时务必显式覆盖默认音色。
+          </div>
+
           <h3>请求体参数（application/json）</h3>
           <table>
             <tr><th>参数</th><th>类型</th><th>默认值</th><th>说明</th></tr>
@@ -339,13 +352,12 @@ resp = requests.post(
             <tr><td class="param-name">input</td><td class="param-type">string</td><td>—</td><td><span class="required">必填</span> 要合成的文本内容</td></tr>
             <tr><td class="param-name">voice</td><td class="param-type">string</td><td>null</td><td><span class="required">必填</span> 预设音色名，见 <a href="#voices">音色列表</a>，如 <code>vivian</code>、<code>ryan</code>、<code>uncle_fu</code></td></tr>
             <tr><td class="param-name">response_format</td><td class="param-type">string</td><td>mp3</td><td><span class="optional">可选</span> 输出格式：<code>mp3</code> / <code>wav</code> / <code>flac</code></td></tr>
+            <tr><td class="param-name">instruct</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 情绪/风格指令，如 <code>用温柔愉快的语气说话</code>、<code>Very excited.</code></td></tr>
+            <tr><td class="param-name">lang_code</td><td class="param-type">string</td><td>auto</td><td><span class="optional">可选</span> 语言代码，见<a href="#voices">语言列表</a>，如 <code>chinese</code>、<code>english</code></td></tr>
             <tr><td class="param-name">speed</td><td class="param-type">float</td><td>1.0</td><td><span class="optional">可选</span> 语速倍率</td></tr>
             <tr><td class="param-name">pitch</td><td class="param-type">float</td><td>1.0</td><td><span class="optional">可选</span> 音调</td></tr>
-            <tr><td class="param-name">gender</td><td class="param-type">string</td><td>male</td><td><span class="optional">可选</span> <code>male</code> / <code>female</code></td></tr>
             <tr><td class="param-name">ref_audio</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 声音克隆参考音频路径（服务器本地路径）</td></tr>
             <tr><td class="param-name">ref_text</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 参考音频对应文本</td></tr>
-            <tr><td class="param-name">lang_code</td><td class="param-type">string</td><td>auto</td><td><span class="optional">可选</span> 语言代码，见 <a href="#voices">语言列表</a>，如 <code>chinese</code>、<code>english</code></td></tr>
-            <tr><td class="param-name">instruct</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 情绪/风格指令，如 <code>用温柔愉快的语气说话</code>、<code>Very excited.</code></td></tr>
             <tr><td class="param-name">temperature</td><td class="param-type">float</td><td>0.7</td><td><span class="optional">可选</span> 采样温度，越高越随机</td></tr>
             <tr><td class="param-name">top_p</td><td class="param-type">float</td><td>0.95</td><td><span class="optional">可选</span> 核采样概率</td></tr>
             <tr><td class="param-name">top_k</td><td class="param-type">int</td><td>40</td><td><span class="optional">可选</span> Top-K 采样</td></tr>
@@ -388,9 +400,36 @@ resp = requests.post(
   -d <span class="str">'{
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
     "input": "用参考音频的声音来合成这段文字。",
+    "voice": "vivian",
     "ref_audio": "/path/to/reference.wav",
     "ref_text": "参考音频中说的内容"
   }'</span> --output cloned.mp3</code></pre>
+          </div>
+
+          <h3>第三方应用接入（OpenAI 兼容客户端）</h3>
+          <div class="warn-box">
+            <strong>⚠️ 必须显式设置 voice</strong> — 大多数 OpenAI 兼容客户端会自动填充默认音色（通常是 <code>alloy</code>），这在本服务中会生成乱码音频。接入时请务必覆盖默认值。
+          </div>
+          <p>以 OpenAI Python SDK 为例，需在调用时传入支持的音色名：</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+            <pre><code><span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="str">"https://tts.badtom.dpdns.org/v1"</span>,
+    api_key=<span class="str">"not-needed"</span>,
+)
+
+<span class="cm"># ✅ 正确：显式指定支持的音色名</span>
+response = client.audio.speech.create(
+    model=<span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
+    voice=<span class="str">"vivian"</span>,  <span class="cm"># 必须是 9 个支持音色之一</span>
+    input=<span class="str">"你好，欢迎使用！"</span>,
+)
+response.stream_to_file(<span class="str">"output.mp3"</span>)
+
+<span class="cm"># ❌ 错误：使用 OpenAI 默认音色（alloy/nova/echo 等）会返回乱码音频</span>
+<span class="cm"># response = client.audio.speech.create(..., voice="alloy", ...)</span></code></pre>
           </div>
         </div>
       </div>
