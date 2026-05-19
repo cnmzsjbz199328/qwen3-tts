@@ -117,6 +117,8 @@
     <a class="sidebar-item" href="#list-models"><span class="method get">GET</span> /v1/models</a>
     <a class="sidebar-item" href="#add-model"><span class="method post">POST</span> /v1/models</a>
     <a class="sidebar-item" href="#remove-model"><span class="method del">DEL</span> /v1/models</a>
+    <div class="sidebar-section">参考</div>
+    <a class="sidebar-item" href="#voices">🎙️ 音色列表</a>
     <div class="sidebar-section">音频</div>
     <a class="sidebar-item" href="#tts"><span class="method post">POST</span> /v1/audio/speech</a>
     <a class="sidebar-item" href="#stt"><span class="method post">POST</span> /v1/audio/transcriptions</a>
@@ -158,7 +160,7 @@
   -d <span class="str">'{
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
     "input": "你好，欢迎使用语音合成！",
-    "voice": "nova"
+    "voice": "vivian"
   }'</span> \
   --output output.mp3</code></pre>
       </div>
@@ -175,7 +177,7 @@ client = OpenAI(
 
 response = client.audio.speech.create(
     model=<span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
-    voice=<span class="str">"nova"</span>,
+    voice=<span class="str">"vivian"</span>,
     input=<span class="str">"你好，欢迎使用语音合成！"</span>,
 )
 response.stream_to_file(<span class="str">"output.mp3"</span>)</code></pre>
@@ -190,7 +192,7 @@ resp = requests.post(
     json={
         <span class="str">"model"</span>: <span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
         <span class="str">"input"</span>: <span class="str">"你好，欢迎使用语音合成！"</span>,
-        <span class="str">"voice"</span>: <span class="str">"nova"</span>,
+        <span class="str">"voice"</span>: <span class="str">"vivian"</span>,
         <span class="str">"response_format"</span>: <span class="str">"mp3"</span>,
     }
 )
@@ -268,6 +270,56 @@ resp = requests.post(
       </div>
     </div>
 
+    <!-- Voices Reference -->
+    <div class="section" id="voices">
+      <h2>🎙️ 音色列表</h2>
+      <p>当前模型（CustomVoice 变体）内置 9 个预设音色，通过请求体的 <code>voice</code> 字段指定名称（不区分大小写）。</p>
+      <table>
+        <tr><th>voice 名称</th><th>性别</th><th>语言倾向</th><th>风格特点</th></tr>
+        <tr><td class="param-name">vivian</td><td>女</td><td>中文 / 英文</td><td>自然流畅，通用场景</td></tr>
+        <tr><td class="param-name">serena</td><td>女</td><td>英文</td><td>温柔清晰，适合客服/助手</td></tr>
+        <tr><td class="param-name">uncle_fu</td><td>男</td><td>中文</td><td>沉稳浑厚，叙事/旁白</td></tr>
+        <tr><td class="param-name">ryan</td><td>男</td><td>英文</td><td>自然男声，通用场景</td></tr>
+        <tr><td class="param-name">aiden</td><td>男</td><td>英文</td><td>年轻活泼，对话场景</td></tr>
+        <tr><td class="param-name">eric</td><td>男</td><td>英文</td><td>清晰沉稳，专业播报</td></tr>
+        <tr><td class="param-name">dylan</td><td>男</td><td>英文</td><td>随和自然，休闲风格</td></tr>
+        <tr><td class="param-name">ono_anna</td><td>女</td><td>日文 / 英文</td><td>柔和细腻，适合日语内容</td></tr>
+        <tr><td class="param-name">sohee</td><td>女</td><td>韩文 / 英文</td><td>清亮甜美，适合韩语内容</td></tr>
+      </table>
+
+      <h3>支持语言（lang_code）</h3>
+      <p>通过 <code>lang_code</code> 字段显式指定语言（默认 <code>auto</code>）：</p>
+      <table>
+        <tr><th>lang_code</th><th>语言</th></tr>
+        <tr><td class="param-name">auto</td><td>自动检测（默认）</td></tr>
+        <tr><td class="param-name">chinese</td><td>普通话</td></tr>
+        <tr><td class="param-name">english</td><td>英语</td></tr>
+        <tr><td class="param-name">japanese</td><td>日语</td></tr>
+        <tr><td class="param-name">korean</td><td>韩语</td></tr>
+        <tr><td class="param-name">french</td><td>法语</td></tr>
+        <tr><td class="param-name">german</td><td>德语</td></tr>
+        <tr><td class="param-name">spanish</td><td>西班牙语</td></tr>
+        <tr><td class="param-name">italian</td><td>意大利语</td></tr>
+        <tr><td class="param-name">portuguese</td><td>葡萄牙语</td></tr>
+        <tr><td class="param-name">russian</td><td>俄语</td></tr>
+        <tr><td class="param-name">beijing_dialect</td><td>北京话</td></tr>
+        <tr><td class="param-name">sichuan_dialect</td><td>四川话</td></tr>
+      </table>
+
+      <h3>示例：指定音色与风格指令</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+        <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
+    "input": "你好，很高兴认识你！",
+    "voice": "vivian",
+    "instruct": "用温柔愉快的语气说话"
+  }'</span> --output output.mp3</code></pre>
+      </div>
+    </div>
+
     <!-- POST /v1/audio/speech -->
     <div class="section" id="tts">
       <h2>语音合成（TTS）</h2>
@@ -285,14 +337,15 @@ resp = requests.post(
             <tr><th>参数</th><th>类型</th><th>默认值</th><th>说明</th></tr>
             <tr><td class="param-name">model</td><td class="param-type">string</td><td>—</td><td><span class="required">必填</span> 模型 ID，如 <code>mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit</code></td></tr>
             <tr><td class="param-name">input</td><td class="param-type">string</td><td>—</td><td><span class="required">必填</span> 要合成的文本内容</td></tr>
-            <tr><td class="param-name">voice</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 预设音色名，如 <code>nova</code>、<code>alloy</code></td></tr>
+            <tr><td class="param-name">voice</td><td class="param-type">string</td><td>null</td><td><span class="required">必填</span> 预设音色名，见 <a href="#voices">音色列表</a>，如 <code>vivian</code>、<code>ryan</code>、<code>uncle_fu</code></td></tr>
             <tr><td class="param-name">response_format</td><td class="param-type">string</td><td>mp3</td><td><span class="optional">可选</span> 输出格式：<code>mp3</code> / <code>wav</code> / <code>flac</code></td></tr>
             <tr><td class="param-name">speed</td><td class="param-type">float</td><td>1.0</td><td><span class="optional">可选</span> 语速倍率</td></tr>
             <tr><td class="param-name">pitch</td><td class="param-type">float</td><td>1.0</td><td><span class="optional">可选</span> 音调</td></tr>
             <tr><td class="param-name">gender</td><td class="param-type">string</td><td>male</td><td><span class="optional">可选</span> <code>male</code> / <code>female</code></td></tr>
             <tr><td class="param-name">ref_audio</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 声音克隆参考音频路径（服务器本地路径）</td></tr>
             <tr><td class="param-name">ref_text</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 参考音频对应文本</td></tr>
-            <tr><td class="param-name">instruct</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 风格指令，如 <code>用温柔的语气说话</code></td></tr>
+            <tr><td class="param-name">lang_code</td><td class="param-type">string</td><td>auto</td><td><span class="optional">可选</span> 语言代码，见 <a href="#voices">语言列表</a>，如 <code>chinese</code>、<code>english</code></td></tr>
+            <tr><td class="param-name">instruct</td><td class="param-type">string</td><td>null</td><td><span class="optional">可选</span> 情绪/风格指令，如 <code>用温柔愉快的语气说话</code>、<code>Very excited.</code></td></tr>
             <tr><td class="param-name">temperature</td><td class="param-type">float</td><td>0.7</td><td><span class="optional">可选</span> 采样温度，越高越随机</td></tr>
             <tr><td class="param-name">top_p</td><td class="param-type">float</td><td>0.95</td><td><span class="optional">可选</span> 核采样概率</td></tr>
             <tr><td class="param-name">top_k</td><td class="param-type">int</td><td>40</td><td><span class="optional">可选</span> Top-K 采样</td></tr>
@@ -308,12 +361,12 @@ resp = requests.post(
   -d <span class="str">'{
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
     "input": "大家好，今天我们来聊聊人工智能的发展。",
-    "voice": "nova",
+    "voice": "vivian",
     "response_format": "mp3"
   }'</span> --output speech.mp3</code></pre>
           </div>
 
-          <h3>示例：调整语速与音调</h3>
+          <h3>示例：指定音色 + 调整语速与音调</h3>
           <div class="code-block">
             <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
             <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
@@ -321,10 +374,9 @@ resp = requests.post(
   -d <span class="str">'{
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
     "input": "这是一段慢速、高音调的朗读示例。",
-    "voice": "nova",
+    "voice": "serena",
     "speed": 0.8,
-    "pitch": 1.2,
-    "gender": "female"
+    "pitch": 1.2
   }'</span> --output speech.mp3</code></pre>
           </div>
 
