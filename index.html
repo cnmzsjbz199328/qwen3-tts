@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTS Playground</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #111111;
+            --bg-panel: #181818;
+            --bg-input: #141414;
+            --border-color: #2a2a2a;
+            --border-focus: #444444;
+            --text-primary: #f0f0f0;
+            --text-secondary: #999999;
+            --text-tertiary: #666666;
+            --accent-bg: #2a2a2a;
+            --accent-hover: #333333;
+            --error: #ef4444;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            flex-shrink: 0;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; }
+
+        .menu-btn {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .menu-btn:hover { background-color: var(--accent-hover); border-color: var(--border-focus); }
+
+        .header-title { font-size: 1.1rem; font-weight: 500; letter-spacing: 0.01em; }
+
+        .header-right { display: flex; align-items: center; gap: 12px; }
+
+        .view-toggle {
+            display: flex;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 4px;
+        }
+
+        .view-btn {
+            background: transparent; border: none;
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            font-size: 0.85rem; font-weight: 500;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .view-btn.active { background-color: var(--accent-bg); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .view-btn:not(.active):hover { color: var(--text-primary); }
+
+        .icon-btn {
+            background: transparent; border: none;
+            color: var(--text-secondary);
+            width: 32px; height: 32px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+        .icon-btn:hover { color: var(--text-primary); background-color: var(--bg-panel); }
+        .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* --- Main --- */
+        main {
+            flex-grow: 1;
+            padding: 8px 32px 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        main::-webkit-scrollbar { width: 8px; }
+        main::-webkit-scrollbar-track { background: transparent; }
+        main::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
+        main::-webkit-scrollbar-thumb:hover { background-color: var(--border-focus); }
+
+        .input-group { display: flex; flex-direction: column; gap: 10px; }
+
+        .input-group label {
+            font-size: 0.85rem; font-weight: 500;
+            color: var(--text-secondary);
+            margin-left: 2px;
+        }
+
+        .input-field {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            font-family: var(--font-family);
+            font-size: 0.95rem; line-height: 1.6;
+            resize: none;
+            transition: all 0.2s ease;
+            width: 100%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .input-field::placeholder { color: var(--text-tertiary); }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            background-color: #161616;
+            box-shadow: 0 0 0 1px var(--border-focus), inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .input-single-line { height: 58px; }
+
+        /* Select */
+        select.input-field {
+            height: 58px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+        }
+        select.input-field option { background-color: #1e1e1e; }
+
+        .controls-row {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 12px;
+        }
+
+        #text-content { min-height: 220px; flex-grow: 1; }
+
+        /* --- Composer View --- */
+        #text-view, #composer-view { display: flex; flex-direction: column; gap: 20px; }
+        #composer-view { display: none; }
+
+        .segment-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .segment-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 12px;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+        .segment-card:hover { border-color: var(--border-focus); }
+        .segment-card.playing { border-color: var(--border-focus); background-color: #1c1c1c; }
+
+        .segment-meta { display: flex; flex-direction: column; gap: 6px; min-width: 120px; }
+
+        .speaker-badge {
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .emotion-badge {
+            display: inline-flex; align-items: center;
+            background-color: var(--accent-bg);
+            color: var(--text-secondary);
+            font-size: 0.72rem; font-weight: 500;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            width: fit-content;
+        }
+
+        .segment-text {
+            font-size: 0.9rem; line-height: 1.5;
+            color: var(--text-primary);
+            padding: 0 4px;
+        }
+
+        .segment-controls { display: flex; align-items: center; gap: 8px; }
+
+        select.segment-voice {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-family: var(--font-family);
+            font-size: 0.8rem;
+            padding: 6px 28px 6px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            transition: border-color 0.2s;
+        }
+        select.segment-voice:focus { outline: none; border-color: var(--border-focus); }
+        select.segment-voice option { background-color: #1e1e1e; }
+
+        .seg-play-btn {
+            background: transparent; border: none;
+            color: var(--text-tertiary);
+            width: 28px; height: 28px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; border-radius: var(--radius-sm);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .seg-play-btn:hover { color: var(--text-primary); background-color: var(--accent-bg); }
+        .seg-play-btn.loading { animation: pulse 0.8s ease-in-out infinite; pointer-events: none; }
+        .seg-play-btn.playing { color: var(--text-primary); }
+
+        .composer-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* --- Footer --- */
+        footer {
+            background-color: var(--bg-base);
+            border-top: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex; align-items: center; gap: 28px;
+            flex-shrink: 0;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .play-btn {
+            background-color: var(--text-primary);
+            color: var(--bg-base);
+            width: 42px; height: 42px;
+            border-radius: 50%; border: none;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 8px rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .play-btn:hover { transform: scale(1.08); }
+        .play-btn:active { transform: scale(0.95); }
+        .play-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+        .play-btn.loading { animation: pulse 0.8s ease-in-out infinite; }
+
+        .progress-container { flex-grow: 1; display: flex; align-items: center; gap: 16px; }
+
+        .time {
+            font-size: 0.75rem; font-weight: 500;
+            color: var(--text-tertiary);
+            font-variant-numeric: tabular-nums;
+            min-width: 36px;
+        }
+
+        .progress-track {
+            flex-grow: 1; height: 4px;
+            background-color: var(--border-color);
+            border-radius: var(--radius-full);
+            position: relative; cursor: pointer;
+            display: flex; align-items: center;
+        }
+        .progress-track:hover .progress-handle { transform: scale(1); opacity: 1; }
+
+        .progress-fill {
+            position: absolute; left: 0; height: 100%;
+            background-color: #888;
+            border-radius: var(--radius-full);
+            width: 0%;
+            pointer-events: none;
+            transition: width 0.1s linear;
+        }
+
+        .progress-handle {
+            position: absolute;
+            width: 12px; height: 12px;
+            background-color: var(--text-primary);
+            border-radius: 50%;
+            margin-left: -6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transform: scale(0.8); opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            left: 0%;
+        }
+
+        .footer-actions { display: flex; align-items: center; gap: 12px; }
+
+        .run-btn {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem; font-weight: 500;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.2s ease;
+            font-family: var(--font-family);
+            white-space: nowrap;
+        }
+        .run-btn:hover { background-color: var(--accent-hover); border-color: var(--border-focus); }
+        .run-btn:active { transform: translateY(1px); }
+        .run-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .shortcut-key { color: var(--text-tertiary); font-size: 0.95rem; display: flex; align-items: center; gap: 2px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%) translateY(12px);
+            background-color: var(--error);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem; font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 100;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Animations */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.9s linear infinite; }
+
+        /* Icons */
+        svg {
+            width: 18px; height: 18px;
+            fill: none; stroke: currentColor;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .play-btn svg { fill: currentColor; stroke: none; width: 16px; height: 16px; margin-left: 2px; }
+        .view-btn svg { width: 16px; height: 16px; }
+        .seg-play-btn svg { width: 15px; height: 15px; }
+    </style>
+</head>
+<body>
+
+    <audio id="audio"></audio>
+    <div class="toast" id="toast"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            <button class="menu-btn" aria-label="Menu">
+                <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1 class="header-title">Playground</h1>
+        </div>
+
+        <div class="header-right">
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="text">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    Text
+                </button>
+                <button class="view-btn" data-view="composer">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>
+                    Composer
+                </button>
+            </div>
+            <button class="icon-btn" id="copy-btn" aria-label="Copy text" title="Copy text">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+            <button class="icon-btn" id="clear-btn" aria-label="Clear" title="Clear">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+
+        <!-- TEXT VIEW -->
+        <div id="text-view">
+            <!-- Voice + Instruct -->
+            <div class="controls-row">
+                <div class="input-group">
+                    <label for="voice-select">Voice</label>
+                    <select id="voice-select" class="input-field">
+                        <optgroup label="中文">
+                            <option value="vivian">Vivian — 明亮年轻女声</option>
+                            <option value="serena">Serena — 温暖温柔女声</option>
+                            <option value="uncle_fu">Uncle Fu — 成熟低沉男声</option>
+                            <option value="dylan">Dylan — 北京方言男声</option>
+                            <option value="eric">Eric — 四川方言男声</option>
+                        </optgroup>
+                        <optgroup label="英文">
+                            <option value="ryan">Ryan — 动感美式男声</option>
+                            <option value="aiden">Aiden — 阳光美式男声</option>
+                        </optgroup>
+                        <optgroup label="日 / 韩">
+                            <option value="ono_anna">Ono Anna — 顽皮日文女声</option>
+                            <option value="sohee">Sohee — 温暖韩文女声</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="instruct-input">Style Instruction <span style="color:var(--text-tertiary);font-weight:400">（可选）</span></label>
+                    <input type="text" id="instruct-input" class="input-field input-single-line"
+                        placeholder="例：用特别愤怒的语气说 · Very happy. · Speak slowly and clearly.">
+                </div>
+            </div>
+
+            <!-- Text -->
+            <div class="input-group" style="flex-grow:1">
+                <label for="text-content">Text</label>
+                <textarea id="text-content" class="input-field" spellcheck="false">Speaker 1: [shouting] Halt, traveler! The northern pass is sealed by order of the council.
+Speaker 2: [determination] I carry a message for the elder. Step aside, or I will force my way through.
+Speaker 1: [caution] No one passes. [pensive] The elder is... he's no longer receiving visitors.
+Speaker 2: [suspicion] What do you mean? We don't have time for games.
+Speaker 1: It's too late. [whispers] The shadow... it reached him first. [urgency] You need to leave. [shouting] Now.</textarea>
+            </div>
+        </div>
+
+        <!-- COMPOSER VIEW -->
+        <div id="composer-view">
+            <div class="segment-list" id="segment-list"></div>
+            <div class="composer-actions">
+                <button class="run-btn" id="composer-run-btn">
+                    <svg viewBox="0 0 24 24" id="composer-run-icon"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon></svg>
+                    Generate All
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer / Player -->
+    <footer>
+        <button class="play-btn" id="play-btn" aria-label="Play" disabled>
+            <svg viewBox="0 0 24 24" id="play-icon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </button>
+
+        <div class="progress-container">
+            <span class="time" id="current-time">0:00</span>
+            <div class="progress-track" id="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+                <div class="progress-handle" id="progress-handle"></div>
+            </div>
+            <span class="time" id="duration">0:00</span>
+        </div>
+
+        <div class="footer-actions">
+            <button class="icon-btn" id="download-btn" aria-label="Download" title="Download audio" disabled>
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+            <button class="icon-btn" id="thumbs-up-btn" aria-label="Good result" title="Good result">
+                <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+            </button>
+            <button class="icon-btn" id="thumbs-down-btn" aria-label="Bad result" title="Bad result">
+                <svg viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
+            </button>
+            <button class="run-btn" id="run-btn">
+                Run
+                <span class="shortcut-key">
+                    <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke-width:2.5"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path></svg>
+                    <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke-width:2.5"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                </span>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = 'https://tts.badtom.dpdns.org/v1';
+        const MODEL   = 'mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit';
+
+        /* ── Elements ── */
+        const audio         = document.getElementById('audio');
+        const playBtn       = document.getElementById('play-btn');
+        const playIcon      = document.getElementById('play-icon');
+        const runBtn        = document.getElementById('run-btn');
+        const voiceSelect   = document.getElementById('voice-select');
+        const instructInput = document.getElementById('instruct-input');
+        const textContent   = document.getElementById('text-content');
+        const progressFill  = document.getElementById('progress-fill');
+        const progressHandle= document.getElementById('progress-handle');
+        const progressTrack = document.getElementById('progress-track');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl    = document.getElementById('duration');
+        const downloadBtn   = document.getElementById('download-btn');
+        const copyBtn       = document.getElementById('copy-btn');
+        const clearBtn      = document.getElementById('clear-btn');
+        const toastEl       = document.getElementById('toast');
+        const textView      = document.getElementById('text-view');
+        const composerView  = document.getElementById('composer-view');
+        const segmentList   = document.getElementById('segment-list');
+        const composerRunBtn= document.getElementById('composer-run-btn');
+
+        /* ── State ── */
+        let audioBlobUrl  = null;
+        let isGenerating  = false;
+        let activeView    = 'text';
+        let composerQueue = [];   // { blob, url } per segment in composer mode
+        let composerIdx   = -1;
+
+        /* ── Toast ── */
+        let toastTimer;
+        function showToast(msg, duration = 3000) {
+            clearTimeout(toastTimer);
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+        }
+
+        /* ── Helpers ── */
+        function formatTime(s) {
+            if (!isFinite(s)) return '0:00';
+            const m = Math.floor(s / 60);
+            return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+        }
+
+        function setProgress(pct) {
+            progressFill.style.width   = `${pct * 100}%`;
+            progressHandle.style.left  = `${pct * 100}%`;
+        }
+
+        function setPlayIcon(playing) {
+            playIcon.innerHTML = playing
+                ? '<rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none"></rect><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none"></rect>'
+                : '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        }
+
+        /* ── API call ── */
+        async function callTTS(text, voice, instruct) {
+            const body = { model: MODEL, input: text, voice };
+            if (instruct) body.instruct = instruct;
+            const res = await fetch(`${API_BASE}/audio/speech`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.blob();
+        }
+
+        /* ── Text View: Generate ── */
+        async function generate() {
+            if (isGenerating) return;
+            const text = textContent.value.trim();
+            if (!text) { showToast('请输入文本内容'); return; }
+
+            isGenerating = true;
+            playBtn.disabled = true;
+            playBtn.classList.add('loading');
+            runBtn.disabled = true;
+            runBtn.textContent = 'Generating…';
+
+            try {
+                const blob = await callTTS(text, voiceSelect.value, instructInput.value.trim());
+                if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+                audioBlobUrl = URL.createObjectURL(blob);
+                audio.src = audioBlobUrl;
+                downloadBtn.disabled = false;
+                await audio.play();
+            } catch (err) {
+                showToast(`生成失败：${err.message}`);
+            } finally {
+                isGenerating = false;
+                playBtn.disabled = false;
+                playBtn.classList.remove('loading');
+                runBtn.disabled = false;
+                runBtn.innerHTML = `Run <span class="shortcut-key">
+                    <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke-width:2.5"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path></svg>
+                    <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke-width:2.5"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>
+                </span>`;
+            }
+        }
+
+        /* ── Audio Events ── */
+        audio.addEventListener('play',  () => setPlayIcon(true));
+        audio.addEventListener('pause', () => setPlayIcon(false));
+        audio.addEventListener('ended', () => {
+            setPlayIcon(false);
+            setProgress(1);
+            // Composer: advance to next segment
+            if (activeView === 'composer') playNextSegment();
+        });
+        audio.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(audio.duration);
+        });
+        audio.addEventListener('timeupdate', () => {
+            if (!audio.duration) return;
+            setProgress(audio.currentTime / audio.duration);
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        });
+
+        /* ── Play Button ── */
+        playBtn.addEventListener('click', () => {
+            if (!audioBlobUrl && activeView === 'text') { generate(); return; }
+            if (audio.paused) audio.play();
+            else              audio.pause();
+        });
+
+        /* ── Run Button ── */
+        runBtn.addEventListener('click', generate);
+
+        /* ── Keyboard: Cmd/Ctrl + Enter ── */
+        document.addEventListener('keydown', e => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                activeView === 'text' ? generate() : generateAll();
+            }
+        });
+
+        /* ── Progress Bar ── */
+        let isDragging = false;
+        function scrub(e) {
+            const rect = progressTrack.getBoundingClientRect();
+            const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            if (audio.duration) audio.currentTime = pct * audio.duration;
+            setProgress(pct);
+        }
+        progressTrack.addEventListener('mousedown', e => { isDragging = true; scrub(e); });
+        window.addEventListener('mousemove', e => { if (isDragging) scrub(e); });
+        window.addEventListener('mouseup',   () => { isDragging = false; });
+
+        /* ── Download ── */
+        downloadBtn.addEventListener('click', () => {
+            if (!audioBlobUrl) return;
+            const a = document.createElement('a');
+            a.href = audioBlobUrl;
+            a.download = 'tts-output.mp3';
+            a.click();
+        });
+
+        /* ── Copy / Clear ── */
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(textContent.value).then(() => showToast('已复制到剪贴板', 1500));
+        });
+        clearBtn.addEventListener('click', () => {
+            textContent.value = '';
+            textContent.focus();
+        });
+
+        /* ── Thumbs ── */
+        document.getElementById('thumbs-up-btn').addEventListener('click', function() {
+            this.style.color = '#4ade80';
+            document.getElementById('thumbs-down-btn').style.color = '';
+        });
+        document.getElementById('thumbs-down-btn').addEventListener('click', function() {
+            this.style.color = '#f87171';
+            document.getElementById('thumbs-up-btn').style.color = '';
+        });
+
+        /* ── View Toggle ── */
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeView = btn.dataset.view;
+                if (activeView === 'composer') {
+                    textView.style.display = 'none';
+                    composerView.style.display = 'flex';
+                    buildComposer();
+                } else {
+                    textView.style.display = 'flex';
+                    composerView.style.display = 'none';
+                }
+            });
+        });
+
+        /* ── Composer: Parse ── */
+        function parseScript(text) {
+            return text.split('\n')
+                .map(line => line.trim())
+                .filter(Boolean)
+                .map(line => {
+                    const m = line.match(/^(Speaker\s*\d+)\s*:\s*\[([^\]]+)\]\s*([\s\S]+)$/i);
+                    if (m) return { speaker: m[1], emotion: m[2], text: m[3].trim() };
+                    // line without emotion tag
+                    const m2 = line.match(/^(Speaker\s*\d+)\s*:\s*([\s\S]+)$/i);
+                    if (m2) return { speaker: m2[1], emotion: null, text: m2[2].trim() };
+                    return { speaker: null, emotion: null, text: line };
+                });
+        }
+
+        const VOICE_OPTIONS = [
+            { value: 'vivian',   label: 'Vivian'    },
+            { value: 'serena',   label: 'Serena'    },
+            { value: 'uncle_fu', label: 'Uncle Fu'  },
+            { value: 'dylan',    label: 'Dylan'     },
+            { value: 'eric',     label: 'Eric'      },
+            { value: 'ryan',     label: 'Ryan'      },
+            { value: 'aiden',    label: 'Aiden'     },
+            { value: 'ono_anna', label: 'Ono Anna'  },
+            { value: 'sohee',    label: 'Sohee'     },
+        ];
+
+        // Auto-assign voice per speaker name
+        const DEFAULT_VOICES = ['vivian', 'ryan', 'serena', 'aiden', 'uncle_fu'];
+        const speakerVoiceMap = {};
+
+        function voiceForSpeaker(speaker) {
+            if (!speaker) return 'vivian';
+            if (!speakerVoiceMap[speaker]) {
+                const idx = Object.keys(speakerVoiceMap).length;
+                speakerVoiceMap[speaker] = DEFAULT_VOICES[idx % DEFAULT_VOICES.length];
+            }
+            return speakerVoiceMap[speaker];
+        }
+
+        function buildVoiceSelect(selectedVoice, cls = 'segment-voice') {
+            const sel = document.createElement('select');
+            sel.className = cls;
+            VOICE_OPTIONS.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.value;
+                opt.textContent = v.label;
+                if (v.value === selectedVoice) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            return sel;
+        }
+
+        function buildComposer() {
+            const segments = parseScript(textContent.value);
+            segmentList.innerHTML = '';
+            composerQueue = new Array(segments.length).fill(null);
+
+            segments.forEach((seg, i) => {
+                const card = document.createElement('div');
+                card.className = 'segment-card';
+                card.dataset.idx = i;
+
+                // Meta
+                const meta = document.createElement('div');
+                meta.className = 'segment-meta';
+                if (seg.speaker) {
+                    const spk = document.createElement('span');
+                    spk.className = 'speaker-badge';
+                    spk.textContent = seg.speaker;
+                    meta.appendChild(spk);
+                }
+                if (seg.emotion) {
+                    const em = document.createElement('span');
+                    em.className = 'emotion-badge';
+                    em.textContent = seg.emotion;
+                    meta.appendChild(em);
+                }
+
+                // Text
+                const txt = document.createElement('div');
+                txt.className = 'segment-text';
+                txt.textContent = seg.text;
+
+                // Controls
+                const ctrl = document.createElement('div');
+                ctrl.className = 'segment-controls';
+
+                const voiceSel = buildVoiceSelect(voiceForSpeaker(seg.speaker));
+                voiceSel.addEventListener('change', () => {
+                    if (seg.speaker) speakerVoiceMap[seg.speaker] = voiceSel.value;
+                });
+
+                const segBtn = document.createElement('button');
+                segBtn.className = 'seg-play-btn';
+                segBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon></svg>`;
+                segBtn.addEventListener('click', () => generateSegment(i, seg.text, voiceSel.value, seg.emotion, segBtn));
+
+                ctrl.appendChild(voiceSel);
+                ctrl.appendChild(segBtn);
+
+                card.appendChild(meta);
+                card.appendChild(txt);
+                card.appendChild(ctrl);
+                segmentList.appendChild(card);
+            });
+        }
+
+        async function generateSegment(idx, text, voice, emotion, btn) {
+            btn.classList.add('loading');
+            btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>`;
+            try {
+                const instruct = emotion ? emotion : '';
+                const blob = await callTTS(text, voice, instruct);
+                const url = URL.createObjectURL(blob);
+                composerQueue[idx] = { blob, url };
+
+                // Play immediately
+                if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+                audioBlobUrl = url;
+                audio.src = url;
+                downloadBtn.disabled = false;
+                playBtn.disabled = false;
+                audio.play();
+
+                btn.classList.remove('loading');
+                btn.classList.add('playing');
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon></svg>`;
+            } catch (err) {
+                btn.classList.remove('loading');
+                btn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon></svg>`;
+                showToast(`段落 ${idx + 1} 生成失败：${err.message}`);
+            }
+        }
+
+        /* ── Composer: Generate All (sequential) ── */
+        async function generateAll() {
+            const cards = segmentList.querySelectorAll('.segment-card');
+            if (!cards.length) { showToast('请先切换到 Text 视图输入多说话人脚本'); return; }
+
+            composerRunBtn.disabled = true;
+            composerRunBtn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg> Generating…`;
+
+            const segments = parseScript(textContent.value);
+            composerQueue = new Array(segments.length).fill(null);
+
+            for (let i = 0; i < segments.length; i++) {
+                const card = cards[i];
+                const voiceSel = card.querySelector('.segment-voice');
+                const segBtn   = card.querySelector('.seg-play-btn');
+                const seg      = segments[i];
+
+                card.classList.add('playing');
+                segBtn.classList.add('loading');
+                segBtn.innerHTML = `<svg class="spin" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>`;
+
+                try {
+                    const blob = await callTTS(seg.text, voiceSel.value, seg.emotion || '');
+                    composerQueue[i] = { blob, url: URL.createObjectURL(blob) };
+                } catch(err) {
+                    showToast(`段落 ${i + 1} 失败：${err.message}`);
+                }
+
+                card.classList.remove('playing');
+                segBtn.classList.remove('loading');
+                segBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon></svg>`;
+            }
+
+            composerRunBtn.disabled = false;
+            composerRunBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"></polygon></svg> Generate All`;
+
+            // Play from beginning
+            composerIdx = -1;
+            playBtn.disabled = false;
+            downloadBtn.disabled = composerQueue.every(s => !s);
+            playNextSegment();
+        }
+
+        function playNextSegment() {
+            composerIdx++;
+            if (composerIdx >= composerQueue.length) { composerIdx = -1; return; }
+            const seg = composerQueue[composerIdx];
+            if (!seg) { playNextSegment(); return; }
+            if (audioBlobUrl && audioBlobUrl !== seg.url) URL.revokeObjectURL(audioBlobUrl);
+            audioBlobUrl = seg.url;
+            audio.src = seg.url;
+            audio.play();
+        }
+
+        composerRunBtn.addEventListener('click', generateAll);
+
+        // Rebuild composer on text changes (debounced)
+        let rebuildTimer;
+        textContent.addEventListener('input', () => {
+            clearTimeout(rebuildTimer);
+            if (activeView === 'composer') {
+                rebuildTimer = setTimeout(buildComposer, 600);
+            }
+        });
+    </script>
+</body>
+</html>

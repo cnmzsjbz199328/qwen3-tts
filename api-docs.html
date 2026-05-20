@@ -277,17 +277,18 @@ resp = requests.post(
       <h2>🎙️ 音色列表</h2>
       <p>当前模型（CustomVoice 变体）内置 9 个预设音色，通过请求体的 <code>voice</code> 字段指定名称（不区分大小写）。</p>
       <table>
-        <tr><th>voice 名称</th><th>性别</th><th>语言倾向</th><th>风格特点</th></tr>
-        <tr><td class="param-name">vivian</td><td>女</td><td>中文 / 英文</td><td>自然流畅，通用场景</td></tr>
-        <tr><td class="param-name">serena</td><td>女</td><td>英文</td><td>温柔清晰，适合客服/助手</td></tr>
-        <tr><td class="param-name">uncle_fu</td><td>男</td><td>中文</td><td>沉稳浑厚，叙事/旁白</td></tr>
-        <tr><td class="param-name">ryan</td><td>男</td><td>英文</td><td>自然男声，通用场景</td></tr>
-        <tr><td class="param-name">aiden</td><td>男</td><td>英文</td><td>年轻活泼，对话场景</td></tr>
-        <tr><td class="param-name">eric</td><td>男</td><td>英文</td><td>清晰沉稳，专业播报</td></tr>
-        <tr><td class="param-name">dylan</td><td>男</td><td>英文</td><td>随和自然，休闲风格</td></tr>
-        <tr><td class="param-name">ono_anna</td><td>女</td><td>日文 / 英文</td><td>柔和细腻，适合日语内容</td></tr>
-        <tr><td class="param-name">sohee</td><td>女</td><td>韩文 / 英文</td><td>清亮甜美，适合韩语内容</td></tr>
+        <tr><th>voice 名称</th><th>性别</th><th>原生语言</th><th>官方描述</th></tr>
+        <tr><td class="param-name">vivian</td><td>女</td><td>中文</td><td>明亮略带棱角的年轻女声，通用场景</td></tr>
+        <tr><td class="param-name">serena</td><td>女</td><td>中文</td><td>温暖温柔的年轻女声，适合客服/助手</td></tr>
+        <tr><td class="param-name">uncle_fu</td><td>男</td><td>中文</td><td>成熟低沉醇厚的男声，叙事/旁白</td></tr>
+        <tr><td class="param-name">dylan</td><td>男</td><td>中文（北京方言）</td><td>年轻北京男声，清晰自然的京腔</td></tr>
+        <tr><td class="param-name">eric</td><td>男</td><td>中文（四川方言）</td><td>活泼成都男声，略带沙哑的明亮感</td></tr>
+        <tr><td class="param-name">ryan</td><td>男</td><td>英文</td><td>动感节奏感强的美式男声</td></tr>
+        <tr><td class="param-name">aiden</td><td>男</td><td>英文</td><td>阳光美式男声，清晰中频</td></tr>
+        <tr><td class="param-name">ono_anna</td><td>女</td><td>日文</td><td>顽皮灵活的日文女声</td></tr>
+        <tr><td class="param-name">sohee</td><td>女</td><td>韩文</td><td>温暖情感丰富的韩文女声</td></tr>
       </table>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">所有音色均可合成任意支持语言的内容，原生语言代表该音色效果最佳的语种。</p>
 
       <h3>支持语言（lang_code）</h3>
       <p>通过 <code>lang_code</code> 字段显式指定语言（默认 <code>auto</code>）：</p>
@@ -308,17 +309,54 @@ resp = requests.post(
         <tr><td class="param-name">sichuan_dialect</td><td>四川话</td></tr>
       </table>
 
-      <h3>示例：指定音色与风格指令</h3>
+      <h3>instruct 情感/风格指令示例</h3>
+      <p><code>instruct</code> 字段接受自然语言描述，支持中英文混用，可控制情绪、语速、语调等多维度声学属性。以下为官方验证可用的示例：</p>
+      <table>
+        <tr><th>instruct 内容</th><th>效果</th></tr>
+        <tr><td class="param-name">用特别愤怒的语气说</td><td>强烈愤怒情绪</td></tr>
+        <tr><td class="param-name">用温柔愉快的语气说话</td><td>温柔愉悦</td></tr>
+        <tr><td class="param-name">Very happy.</td><td>开心兴奋（英文指令）</td></tr>
+        <tr><td class="param-name">Speak slowly and clearly.</td><td>放慢语速，咬字清晰</td></tr>
+        <tr><td class="param-name">用悲伤哽咽的语气</td><td>悲伤、声音带哽咽感</td></tr>
+        <tr><td class="param-name">用轻松随意的聊天语气</td><td>口语化，自然随意</td></tr>
+      </table>
+      <div class="info-box" style="margin-top:12px">
+        <strong>注：</strong>instruct 属于模型层面的自然语言理解，不保证 100% 精确执行，但模型会根据文本语义和指令联合决策最终的表达方式。
+      </div>
+
+      <h3>示例：情感控制</h3>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
         <pre><code>curl https://tts.badtom.dpdns.org/v1/audio/speech \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d <span class="str">'{
     "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit",
-    "input": "你好，很高兴认识你！",
+    "input": "其实我真的有发现，我是一个特别善于观察别人情绪的人。",
     "voice": "vivian",
-    "instruct": "用温柔愉快的语气说话"
+    "instruct": "用特别愤怒的语气说"
   }'</span> --output output.mp3</code></pre>
+      </div>
+
+      <h3>流式生成（低延迟）</h3>
+      <p>设置 <code>"stream": true</code> 启用流式模式，端到端首包延迟低至 <strong>97ms</strong>，适合实时对话场景。服务器以 chunked transfer 返回音频流。</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">复制</button></div>
+        <pre><code><span class="kw">import</span> requests
+
+<span class="kw">with</span> requests.post(
+    <span class="str">"https://tts.badtom.dpdns.org/v1/audio/speech"</span>,
+    json={
+        <span class="str">"model"</span>: <span class="str">"mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit"</span>,
+        <span class="str">"input"</span>: <span class="str">"你好，这是一段流式合成的语音。"</span>,
+        <span class="str">"voice"</span>: <span class="str">"vivian"</span>,
+        <span class="str">"stream"</span>: <span class="kw">True</span>,
+        <span class="str">"streaming_interval"</span>: <span class="num">2.0</span>,  <span class="cm"># 每 2 秒推送一个音频块</span>
+    },
+    stream=<span class="kw">True</span>,
+) <span class="kw">as</span> r:
+    <span class="kw">with</span> open(<span class="str">"output.mp3"</span>, <span class="str">"wb"</span>) <span class="kw">as</span> f:
+        <span class="kw">for</span> chunk <span class="kw">in</span> r.iter_content(chunk_size=<span class="num">4096</span>):
+            f.write(chunk)</code></pre>
       </div>
     </div>
 
@@ -362,7 +400,8 @@ resp = requests.post(
             <tr><td class="param-name">top_p</td><td class="param-type">float</td><td>0.95</td><td><span class="optional">可选</span> 核采样概率</td></tr>
             <tr><td class="param-name">top_k</td><td class="param-type">int</td><td>40</td><td><span class="optional">可选</span> Top-K 采样</td></tr>
             <tr><td class="param-name">max_tokens</td><td class="param-type">int</td><td>1200</td><td><span class="optional">可选</span> 最大生成 token 数</td></tr>
-            <tr><td class="param-name">stream</td><td class="param-type">bool</td><td>false</td><td><span class="optional">可选</span> 是否流式返回</td></tr>
+            <tr><td class="param-name">stream</td><td class="param-type">bool</td><td>false</td><td><span class="optional">可选</span> 流式返回，首包延迟低至 97ms，适合实时对话</td></tr>
+            <tr><td class="param-name">streaming_interval</td><td class="param-type">float</td><td>2.0</td><td><span class="optional">可选</span> 流式模式下每个音频块的时长（秒）</td></tr>
           </table>
 
           <h3>示例：基础合成</h3>
